@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  web:
+    build: .
+      #context: ./
+      #target: runner
+    container_name: bazigaar-admin
+    #command: npm start
+    ports:
+      - "3005:3000"
+    volumes:
+      - .:/app
+    environment:
+      NODE_ENV: production

@@ -1,0 +1,10 @@
+node_modules
+.next
+.github
+.husky
+#.env
+Dockerfile
+docker-compose.yaml
+.dockerignore
+.gitignore
+build

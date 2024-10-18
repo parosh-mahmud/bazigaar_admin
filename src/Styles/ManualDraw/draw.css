@@ -1,0 +1,71 @@
+.start-img {
+    background-image: url(../../Assets/draw/start.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 50%;
+    width: 50%;
+}
+.rolling-img {
+    background-image: url(../../Assets/draw/Rolling.png);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.stop-img {
+    background-image: url(../../Assets/draw/stop.png);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.base-timer {
+    position: relative;
+    width: 336px;
+    height: 336px;
+}
+
+.base-timer__svg {
+    transform: scaleX(-1);
+}
+
+.base-timer__circle {
+    fill: none;
+    stroke: none;
+}
+
+.base-timer__path-elapsed {
+    stroke-width: 7px;
+    stroke: rgb(241, 241, 241);
+    filter: drop-shadow(0px -0.5px 0.5px rgba(47, 48, 47, 0.234));
+}
+
+.base-timer__path-remaining {
+    stroke-width: 7px;
+    stroke-linecap: round;
+    transform: rotate(90deg);
+    transform-origin: center;
+    transition: 1s linear all;
+    fill-rule: nonzero;
+    stroke: currentColor;
+}
+
+.base-timer__path-remaining.green {
+    color: #2eff75;
+}
+
+.base-timer__path-remaining.orange {
+    color: orange;
+}
+
+.base-timer__path-remaining.red {
+    color: #f76868;
+}
+
+.base-timer__label {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+}

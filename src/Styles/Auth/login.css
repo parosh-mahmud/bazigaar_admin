@@ -1,0 +1,6 @@
+.login_banner{
+  background-image: url("../../Assets/auth/loginHeader.svg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+}
