@@ -1,54 +1,23 @@
-FROM node:16.20.1-alpine AS deps
-#RUN apk add --no-cache libc6-compat
-RUN mkdir /app
+# Use the official Node image as a base image
+FROM node:18-alpine
 
+# Set the working directory inside the container
 WORKDIR /app
 
-#ENV NODE_ENV production
+# Copy the package.json and package-lock.json
+COPY package*.json ./
 
+# Install dependencies
+RUN npm install
 
-COPY package.json package-lock.json ./
-RUN  npm i
-#RUN npm install -g serve
-#FROM node:16.20.1-alpine AS builder
-#WORKDIR /app
-#COPY --from=deps /app/node_modules ./node_modules
-#COPY . /app
-
-#ENV NEXT_TELEMETRY_DISABLED 1
-
+# Copy the rest of the application code
 COPY . .
-#RUN npm run build
 
-#COPY . .
-#FROM node:16.20.1-alpine AS runner
-#WORKDIR /app
+# Build the React app for production
+RUN npm run build
 
-#ENV NODE_ENV production
-#ENV NEXT_TELEMETRY_DISABLED 1
-
-#RUN addgroup --system --gid 1001 bazigaarg
-#RUN adduser --system --uid 1001 bazigaar
-
-#COPY --from=builder --chown=bazigaar:bazigaarg /app/.next ./.next
-#COPY --from=builder /app/node_modules ./node_modules
-#COPY --from=builder /app/package.json ./package.json
-
-#COPY --from=builder --chown=bazigaar:bazigaarg /app/.next/standalone ./
-#COPY --from=builder --chown=bazigaar:bazigaarg /app/.next/static ./.next/static
-
-#USER bazigaar
-
-
+# Expose the port on which the app will run
 EXPOSE 3000
 
-ENV PORT 3000
-
-#ENV NODE_ENV production
-
-#ENV REACT_APP_MAIN_URL https://admin.bazigaar.com:8080
-#ENV REACT_APP_PROXY_URL http://fileproxyserver-prod.ap-southeast-1.elasticbeanstalk.com
-
-#RUN npm run build
-CMD ["npm", "start"]
-#CMD [ "serve", "build" ]
+# Start the app
+CMD ["npx", "serve", "-s", "build"]
