@@ -24,8 +24,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t your-dockerhub-username/react-app:latest .
-          docker push your-dockerhub-username/react-app:latest
+          docker build -t bazigaar/react-app:latest .
+          docker push bazigaar/react-app:latest
 
       - name: SSH and deploy on Droplet
         uses: appleboy/ssh-action@master
