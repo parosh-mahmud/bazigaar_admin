@@ -34,7 +34,7 @@ jobs:
           username: root
           key: ${{ secrets.DROPLET_PASSWORD }}
           script: |
-            docker pull your-dockerhub-username/react-app:latest
+            docker pull bazigaar/react-app:latest
             docker stop react-app || true
             docker rm react-app || true
-            docker run -d -p 3000:3000 --name react-app your-dockerhub-username/react-app:latest
+            docker run -d -p 3000:3000 --name react-app bazigaar/react-app:latest
