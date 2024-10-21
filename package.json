@@ -39,7 +39,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
-  "proxy": "http://api.bazigaar.com",
+  "proxy": "https://api.bazigaar.com",
   "eslintConfig": {
     "extends": [
       "react-app",
