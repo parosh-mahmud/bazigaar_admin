@@ -56,16 +56,6 @@ export const sidebarDatas = [
           { id: 23, name: "All User", url: "/manage-users/all-user" },
           { id: 24, name: "Active User", url: "/manage-users/active-user" },
           { id: 25, name: "Block User", url: "/manage-users/block-user" },
-          // {
-          //   id: 26,
-          //   name: "Email Unverified",
-          //   url: "/manage-users/email-unverified",
-          // },
-          // {
-          //   id: 27,
-          //   name: "Mobile Unverified",
-          //   url: "/manage-users/mobile-unverified",
-          // },
         ],
       },
       {
@@ -83,21 +73,14 @@ export const sidebarDatas = [
           },
         ],
       },
-      // {
-      //   id: 4,
-      //   name: "Manage Event",
-      //   url: "",
-      //   icon: (
-      //     <EventIcon className="focus:fill-white active:fill-white group-hover:fill-white" />
-      //   ),
-      //   submenu: [
-      //     {
-      //       id: 29,
-      //       name: "All Event",
-      //       url: "/manage-event/all-event",
-      //     },
-      //   ],
-      // },
+      {
+        id: 6,
+        name: "Scratchcards",
+        url: "/manage-scratchcards",
+        icon: (
+          <LotteryIcon className="focus:fill-white active:fill-white group-hover:fill-white" />
+        ),
+      },
       {
         id: 5,
         name: "Partner",
@@ -115,15 +98,6 @@ export const sidebarDatas = [
           { id: 3, name: "Reseller", url: "/partner/reseller" },
         ],
       },
-      // {
-      //   id: 6,
-      //   name: "Chat",
-      //   url: "/chat",
-      //   icon: (
-      //     <ChatIcon className="focus:fill-white active:fill-white group-hover:fill-white" />
-      //   ),
-      //   submenu: [],
-      // },
       {
         id: 7,
         name: "History",
@@ -131,19 +105,7 @@ export const sidebarDatas = [
         icon: (
           <HistoryIcon className="focus:fill-white active:fill-white group-hover:fill-white" />
         ),
-        submenu: [
-          // {
-          //   id: 1,
-          //   name: "Transition History",
-          //   url: "/history/transition-history",
-          // },
-          // {
-          //   id: 2,
-          //   name: "Sold Ticket History",
-          //   url: "/history/sold-ticket-history",
-          // },
-          // { id: 3, name: "Winner History", url: "/history/winner-history" },
-        ],
+        submenu: [],
       },
       {
         id: 8,
@@ -178,7 +140,6 @@ export const sidebarDatas = [
             name: "Banking",
             url: "/wallet/banking",
           },
-
           {
             id: 3,
             name: "Crypto Currency",
@@ -204,7 +165,6 @@ export const sidebarDatas = [
             name: "Banking Withdraw",
             url: "/withdraw/banking",
           },
-
           {
             id: 3,
             name: "Crypto Withdraw",
@@ -212,13 +172,6 @@ export const sidebarDatas = [
           },
         ],
       },
-      // {
-      //   id: 2,
-      //   name: "Earning",
-      //   url: "/earning",
-      //   icon: <EarningIcon className="group-hover:fill-white focus:fill-white active:fill-white" />,
-      //   submenu: [],
-      // },
     ],
   },
   {

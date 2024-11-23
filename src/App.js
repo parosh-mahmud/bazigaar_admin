@@ -40,7 +40,9 @@ const RequestDetails = lazy(() => import("./Pages/Request/RequestDetails"));
 const CryptoCurrency = lazy(() => import("./Pages/Wallet/CryptoCurrency"));
 const Banking = lazy(() => import("./Pages/Wallet/Banking"));
 const MobileBanking = lazy(() => import("./Pages/Wallet/MobileBanking"));
-
+const Scratchcards = lazy(() =>
+  import("./Component/manage-scratchcards/AllScratchCards")
+);
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -65,6 +67,8 @@ export default function App() {
                 <Lottery isLoading={isLoading} setIsLoading={setIsLoading} />
               }
             />
+
+            <Route path="/manage-scratchcards" element={<Scratchcards />} />
             <Route
               path="/manage-lottery/manual-draw"
               element={
