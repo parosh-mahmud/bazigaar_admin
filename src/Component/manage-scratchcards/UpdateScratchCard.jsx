@@ -3,12 +3,14 @@ import React, { useState } from "react";
 const UpdateScratchCard = ({ scratchcard, onUpdate, onClose }) => {
   // Exchange rate: $1 = 150 bg coin
   const BG_COIN_TO_USD = 1 / 150;
+const [isUpdating, setIsUpdating] = useState(false);
+const [formData, setFormData] = useState({
+  ...scratchcard,
+  totalCost: 0,
+  profit: 0,
+  prizes: scratchcard.prizes || [], // Default to an empty array
+});
 
-  const [formData, setFormData] = useState({
-    ...scratchcard,
-    totalCost: 0,
-    profit: 0,
-  });
 
   const [imagePreview, setImagePreview] = useState(scratchcard.image);
 
@@ -66,17 +68,26 @@ const UpdateScratchCard = ({ scratchcard, onUpdate, onClose }) => {
   };
 
   // Handle file upload
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result);
-        setFormData({ ...formData, image: reader.result });
-      };
-      reader.readAsDataURL(file);
+const handleImageUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
     }
-  };
+    if (file.size > 5 * 1024 * 1024) { // 5 MB size limit
+      alert("File size should not exceed 5MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagePreview(reader.result);
+      setFormData({ ...formData, image: reader.result });
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
 
   // Add new prize tier
   const handleAddPrize = () => {
@@ -96,10 +107,18 @@ const UpdateScratchCard = ({ scratchcard, onUpdate, onClose }) => {
   };
 
   // Handle update
-  const handleUpdate = () => {
-    onUpdate(formData);
+const handleUpdate = async () => {
+  setIsUpdating(true);
+  try {
+    await onUpdate(formData); // Assuming onUpdate is an async function
+    alert("Scratchcard updated successfully!");
     onClose();
-  };
+  } catch (error) {
+    alert("Failed to update scratchcard. Please try again.");
+  } finally {
+    setIsUpdating(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-start overflow-y-auto ">

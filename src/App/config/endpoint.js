@@ -51,6 +51,13 @@ export const ENDPOINT = {
     updateSlider: "/api/slider/update-slider/",
     deleteSlider: "/api/slider/delete/",
   },
+  scratchCards: {
+    createScratchCard: "/api/v1/admin/scratchcards/",
+    getAllScratchCards: "/api/v1/admin/scratchcards/",
+    getScratchCardDetails: "/api/v1/admin/scratchcards/",
+    updateScratchCard: "/api/v1/admin/scratchcards/",
+    deleteScratchCard: "/api/v1/admin/scratchcards/",
+  },
   request: {
     request: "/reseller/get-topup-history/",
   },

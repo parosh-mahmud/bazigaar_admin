@@ -3,6 +3,7 @@ import React, { useState } from "react";
 const CreateNewScratchcard = ({ onSave, onClose }) => {
   const [formData, setFormData] = useState({
     image: "",
+    imageFile: null,
     name: "",
     type: "",
     totalCards: 0,
@@ -10,12 +11,14 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
     status: "Active",
     prizes: [],
     totalCost: 0,
+    totalRevenue: 0,
     profit: 0,
     perCardPrice: 0,
   });
 
   const [imagePreview, setImagePreview] = useState(null);
   const [errors, setErrors] = useState({});
+  const token = JSON.parse(localStorage.getItem("authInfo"));
 
   // Exchange rate: $1 = 150 bg coin
   const BG_COIN_TO_USD = 1 / 150;
@@ -81,7 +84,8 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
       (acc, prize) => acc + (parseFloat(prize.cost) || 0),
       0
     );
-    const profit = calculateProfit(
+
+    const { revenue, profit } = calculateProfitAndRevenue(
       suggestedSetup.totalCards,
       perCardPrice,
       totalCost
@@ -94,6 +98,7 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
       totalCards: suggestedSetup.totalCards,
       prizes: suggestedSetup.prizes,
       totalCost,
+      totalRevenue: revenue,
       profit,
     });
   };
@@ -101,14 +106,16 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
   // Handle total cards change
   const handleTotalCardsChange = (e) => {
     const totalCards = parseInt(e.target.value) || 0;
+    const { revenue, profit } = calculateProfitAndRevenue(
+      totalCards,
+      formData.perCardPrice,
+      formData.totalCost
+    );
     setFormData({
       ...formData,
       totalCards,
-      profit: calculateProfit(
-        totalCards,
-        formData.perCardPrice,
-        formData.totalCost
-      ),
+      totalRevenue: revenue,
+      profit,
     });
   };
 
@@ -127,32 +134,38 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
       (acc, prize) => acc + (prize.cost || 0),
       0
     );
+
+    const { revenue, profit } = calculateProfitAndRevenue(
+      formData.totalCards,
+      formData.perCardPrice,
+      totalCost
+    );
+
     setFormData({
       ...formData,
       prizes,
       totalCost,
-      profit: calculateProfit(
-        formData.totalCards,
-        formData.perCardPrice,
-        totalCost
-      ),
+      totalRevenue: revenue,
+      profit,
     });
   };
 
-  // Calculate profit
-  const calculateProfit = (totalCards, perCardPrice, totalCost) => {
+  // Calculate profit and revenue
+  const calculateProfitAndRevenue = (totalCards, perCardPrice, totalCost) => {
     const revenue = totalCards * perCardPrice;
-    return revenue - totalCost;
+    const profit = revenue - totalCost;
+    return { revenue, profit };
   };
 
   // Handle file upload
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setFormData({ ...formData, imageFile: file });
       const reader = new FileReader();
       reader.onload = () => {
         setImagePreview(reader.result);
-        setFormData({ ...formData, image: reader.result });
+        setFormData({ ...formData, image: reader.result, imageFile: file });
       };
       reader.readAsDataURL(file);
       setErrors({ ...errors, image: "" });
@@ -160,11 +173,77 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
   };
 
   // Handle save
-  const handleSave = () => {
-    onSave(formData);
+  const handleSave = async () => {
+  // Validate required fields
+  const requiredFields = ["name", "type", "totalCards", "description"];
+  let newErrors = {};
+  requiredFields.forEach((field) => {
+    if (!formData[field]) {
+      newErrors[field] = "This field is required";
+    }
+  });
+  if (formData.prizes.length === 0) {
+    newErrors.prizes = "At least one prize tier is required";
+  }
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+
+  // Prepare FormData
+  const formDataToSend = new FormData();
+  formDataToSend.append("name", formData.name);
+  formDataToSend.append("type", formData.type);
+  formDataToSend.append("total_cards", formData.totalCards);
+  formDataToSend.append("description", formData.description);
+  formDataToSend.append("status", formData.status);
+
+  if (formData.imageFile) {
+    formDataToSend.append("product_image", formData.imageFile);
+  }
+
+  // Append prize_tiers as JSON
+  formDataToSend.append("prize_tiers", JSON.stringify(formData.prizes.map((prize) => ({
+    tier_name: prize.tier,
+    prize_value: parseFloat(prize.value),
+    quantity: parseInt(prize.quantity),
+    cost: parseFloat(prize.cost),
+  }))));
+
+  // Debug FormData content
+  console.log("FormData content:");
+  for (let pair of formDataToSend.entries()) {
+    console.log(pair[0], pair[1]);
+  }
+
+  try {
+    const response = await fetch(
+      "https://api.bazigaar.com/api/v1/admin/scratchcards/",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Token " + token.token,
+        },
+        body: formDataToSend,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error creating scratchcard:", errorData);
+      setErrors(errorData);
+      return;
+    }
+
+    const responseData = await response.json();
+    console.log("Scratchcard created successfully:", responseData);
+    onSave(responseData);
     setImagePreview(null);
     onClose();
-  };
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
 
   // Add new prize tier
   const handleAddPrize = () => {
@@ -185,15 +264,17 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
       (acc, prize) => acc + (prize.cost || 0),
       0
     );
+    const { revenue, profit } = calculateProfitAndRevenue(
+      formData.totalCards,
+      formData.perCardPrice,
+      totalCost
+    );
     setFormData({
       ...formData,
       prizes,
       totalCost,
-      profit: calculateProfit(
-        formData.totalCards,
-        formData.perCardPrice,
-        totalCost
-      ),
+      totalRevenue: revenue,
+      profit,
     });
   };
 
@@ -215,6 +296,9 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
               onChange={handleInputChange}
               className="w-full border border-gray-300 p-2 rounded mt-1"
             />
+            {errors.name && (
+              <p className="text-red-500 text-sm">{errors.name}</p>
+            )}
           </div>
 
           {/* Type */}
@@ -231,6 +315,9 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
               <option value="20 Coin">20 Coin</option>
               <option value="50 Coin">50 Coin</option>
             </select>
+            {errors.type && (
+              <p className="text-red-500 text-sm">{errors.type}</p>
+            )}
           </div>
 
           {/* Total Cards */}
@@ -244,6 +331,9 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
               onChange={handleTotalCardsChange}
               className="w-full border border-gray-300 p-2 rounded mt-1"
             />
+            {errors.totalCards && (
+              <p className="text-red-500 text-sm">{errors.totalCards}</p>
+            )}
           </div>
 
           {/* Image Upload */}
@@ -255,6 +345,9 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
               onChange={handleImageUpload}
               className="w-full border border-gray-300 p-2 rounded mt-1"
             />
+            {errors.image && (
+              <p className="text-red-500 text-sm">{errors.image}</p>
+            )}
           </div>
 
           {/* Description */}
@@ -268,6 +361,9 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
               className="w-full border border-gray-300 p-2 rounded mt-1"
               rows="4"
             />
+            {errors.description && (
+              <p className="text-red-500 text-sm">{errors.description}</p>
+            )}
           </div>
 
           {/* Image Preview */}
@@ -288,6 +384,9 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
         {/* Prize Tiers */}
         <div className="mt-6">
           <h3 className="text-lg font-bold mb-4">Prize Tiers</h3>
+          {errors.prizes && (
+            <p className="text-red-500 text-sm mb-2">{errors.prizes}</p>
+          )}
           {/* Column Headers */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-2 md:gap-4 font-semibold mb-2">
             <div>Tier Name</div>
@@ -355,6 +454,10 @@ const CreateNewScratchcard = ({ onSave, onClose }) => {
           <p className="text-lg font-bold">
             Per Card Price: {formData.perCardPrice} bg coin (~$
             {(formData.perCardPrice * BG_COIN_TO_USD).toFixed(2)})
+          </p>
+          <p className="text-lg font-bold">
+            Total Revenue: {formData.totalRevenue.toFixed(2)} bg coin (~$
+            {(formData.totalRevenue * BG_COIN_TO_USD).toFixed(2)})
           </p>
           <p className="text-lg font-bold">
             Total Cost: {formData.totalCost.toFixed(2)} bg coin (~$
