@@ -384,7 +384,7 @@ export default function PrimaryLayout({ children, pageTitle }) {
                         <div className="rounded-full">
                           {profile ? (
                             <ul className="absolute left-0 mt-12 w-full rounded border-r bg-white p-2 shadow sm:mt-16 ">
-                              {/* <li className="flex w-full cursor-pointer items-center justify-between text-gray-600 hover:text-indigo-700">
+                              <li className="flex w-full cursor-pointer items-center justify-between text-gray-600 hover:text-indigo-700">
                                 <div className="flex items-center">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -405,7 +405,7 @@ export default function PrimaryLayout({ children, pageTitle }) {
                                     My Profile
                                   </span>
                                 </div>
-                              </li> */}
+                              </li>
                               <li className="mt-2 flex w-full cursor-pointer items-center justify-between text-gray-600 hover:text-indigo-700">
                                 <div className="flex items-center">
                                   <svg

@@ -20,6 +20,8 @@ const Lottery = ({ isLoading, setIsLoading }) => {
   const [tableDatas, setTableDatas] = useState([]);
   const [tableDatas2, setTableDatas2] = useState([]);
   const token = JSON.parse(localStorage.getItem("authInfo"));
+  const [activeLottery, setActiveLottery] = useState([]);
+  console.log(activeLottery)
   useEffect(() => {
     setModalOpen(false);
   }, []);
@@ -38,10 +40,12 @@ const Lottery = ({ isLoading, setIsLoading }) => {
         if (res.data.type === "error") {
           toast.error(res.message);
         } else {
-          console.log(res.data);
+          console.log(res.data.length);
           let temp = res.data;
           temp = temp.reverse();
           setTableDatas(temp);
+           setActiveLottery(res.data.length);
+
           setTableDatas2(temp);
         }
       })
@@ -77,6 +81,7 @@ const Lottery = ({ isLoading, setIsLoading }) => {
           tableDatas={tableDatas}
           tableDatas2={tableDatas2}
           setTableDatas2={setTableDatas2}
+          activeLottery={activeLottery}
         />
 
         <Modal

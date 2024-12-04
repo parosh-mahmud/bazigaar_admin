@@ -184,7 +184,7 @@ const MobileWithdraw = ({ isLoading, setIsLoading }) => {
                         <img
                           className="h-full w-full"
 
-                          src={`${process.env.REACT_APP_MAIN_URL}${tbody?.user?.profile_picture}`}
+                          src={`${tbody?.user?.profile_picture}`}
                               alt={tbody?.user?.username}
 
                         />

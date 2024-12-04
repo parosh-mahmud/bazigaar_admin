@@ -12,7 +12,7 @@ const tableHead = [
   { id: 2, name: "Image", width: 40 },
   { id: 3, name: "Ticket Name", width: 250 },
   { id: 11, name: "Type", width: 50 },
-  { id: 4, name: "Price", width: 120 },
+  { id: 4, name: "Price per ticket", width: 170 },
   { id: 5, name: "Ticket Qty", width: 140 },
   { id: 6, name: "Sold Ticket", width: 140 },
   { id: 7, name: "Start Date - Draw Date", width: 200 },
@@ -29,9 +29,10 @@ const AllLotteryTable = ({
   tableDatas,
   tableDatas2,
   setTableDatas2,
+  activeLottery
 }) => {
   const [searchState, setSearchState] = useState("");
-
+console.log(activeLottery)
   const [modalOpen, setModalOpen] = useState(false);
   const [modalOpen2, setModalOpen2] = useState(false);
   const [modalContent, setModalContent] = useState("");
@@ -117,6 +118,9 @@ const AllLotteryTable = ({
           <h3 className="font-poppins text-xl font-semibold text-black lg:text-2xl">
             Lottery Phases
           </h3>
+          <h3 className="font-poppins text-xl font-semibold text-black lg:text-2xl">
+            Active Lottery {activeLottery}
+          </h3>
         </div>
 
         <div className="flex w-full flex-col items-center gap-4 md:w-[unset] md:flex-row">
@@ -180,7 +184,7 @@ const AllLotteryTable = ({
                       <div className="h-10 w-10">
                         <img
                           className="h-full w-full"
-                          src={`${process.env.REACT_APP_MAIN_URL}${tbody?.image_banner}`}
+                          src={tbody?.image_banner}
                           alt={tbody?.LotteryName}
                         />
                       </div>
@@ -197,7 +201,7 @@ const AllLotteryTable = ({
                     </td>
                     <td className="px-2">
                       <p className="text-left font-poppins text-base font-normal">
-                        ${tbody?.Price}
+                        {tbody?.Price} Coin
                       </p>
                     </td>
                     <td className="px-2">

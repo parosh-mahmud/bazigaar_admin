@@ -795,7 +795,7 @@ const UpdateLottery = ({
             <div className="mb-4">
               <p className="pb-2 font-poppins text-base font-semibold text-blackText">Price:</p>
               <div className="flex items-center">
-                <span className="rounded-l-lg border border-black bg-black px-3 py-3 text-base font-semibold text-white">$</span>
+                <span className="rounded-l-lg border border-black bg-black px-3 py-3 text-base font-semibold text-white">Coin</span>
                 <input
                   type="number"
                   className="w-full rounded-r-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"

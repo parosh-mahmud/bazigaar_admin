@@ -131,16 +131,16 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-10">
           {/* General Information Section */}
           <div className="p-5 border border-gray-300 rounded-lg">
-<div className="pb-4 mb-4 border-b-4 border-gray-500">
-    <h2 className="text-3xl font-semibold text-center text-blue-600">General Information</h2>
-  </div>
+            <div className="pb-4 mb-4 border-b-4 border-gray-500">
+              <h2 className="text-3xl font-semibold text-center text-blue-600">General Information</h2>
+            </div>
             {/* Lottery Name */}
             <div className="mb-4">
               <p className="pb-2 font-poppins text-base font-semibold text-blackText">Lottery Name:</p>
               <input
                 type="text"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="Enter Lottery Name"
+                placeholder="e.g., Mega Jackpot Lottery"
                 onChange={(e) => setLotteryData({ ...lotteryData, LotteryName: e.target.value })}
                 required
               />
@@ -162,11 +162,11 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
             <div className="mb-4">
               <p className="pb-2 font-poppins text-base font-semibold text-blackText">Price:</p>
               <div className="flex items-center">
-                <span className="rounded-l-lg border border-black bg-black px-3 py-3 text-base font-semibold text-white">$</span>
+                <span className="rounded-l-lg border border-black bg-black px-3 py-3 text-base font-semibold text-white">coin</span>
                 <input
                   type="number"
                   className="w-full rounded-r-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                  placeholder="0"
+                  placeholder="e.g., 5"
                   min={0}
                   onChange={(e) => setLotteryData({ ...lotteryData, Price: e.target.value })}
                   required
@@ -180,7 +180,7 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
               <input
                 type="number"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="0"
+                placeholder="e.g., 1000"
                 min={0}
                 onChange={(e) => setLotteryData({ ...lotteryData, PriceAmount: e.target.value })}
                 required
@@ -193,7 +193,7 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
               <input
                 type="number"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="0"
+                placeholder="e.g., 500"
                 min={0}
                 onChange={(e) => setLotteryData({ ...lotteryData, NumberOfTickets: e.target.value })}
                 required
@@ -249,41 +249,36 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
                 <option value="">Select</option>
                 <option value="Regular">Regular Lottery</option>
                 <option value="Special">Special Lottery</option>
-                {/* <option value="P3">P3</option> */}
               </select>
             </div>
 
             {/* Total Number Of Winners */}
-<div className="mb-4">
-  <p className="pb-2 font-poppins text-base font-semibold text-blackText">
-    Total Winners:
-  </p>
-  <div className="flex items-center justify-center rounded-lg border border-blue-500 bg-blue-100 px-4 py-3">
-    <span className="text-2xl font-bold text-blue-700">
-      {Number(lotteryData.TotalFirstPrizeWinner) +
-        Number(lotteryData.TotalSecondPrizeWinner) +
-        Number(lotteryData.TotalThirdPrizeWinner)}
-    </span>
-  </div>
-</div>
-
-
+            <div className="mb-4">
+              <p className="pb-2 font-poppins text-base font-semibold text-blackText">Total Winners:</p>
+              <div className="flex items-center justify-center rounded-lg border border-blue-500 bg-blue-100 px-4 py-3">
+                <span className="text-2xl font-bold text-blue-700">
+                  {Number(lotteryData.TotalFirstPrizeWinner) +
+                    Number(lotteryData.TotalSecondPrizeWinner) +
+                    Number(lotteryData.TotalThirdPrizeWinner)}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Prizes Section */}
           <div className="p-5 border border-gray-300 rounded-lg">
-           <div className="pb-4 mb-4 border-b-4 border-gray-500">
-    <h2 className="text-3xl font-semibold text-center text-blue-600">Prizes</h2>
-  </div>
+            <div className="pb-4 mb-4 border-b-4 border-gray-500">
+              <h2 className="text-3xl font-semibold text-center text-blue-600">Prizes</h2>
+            </div>
 
             {/* First Prize */}
             <div className="mb-4">
-            <h3 className="pb-2 text-1xl font-bold text-center  ">First Prize</h3>
+              <h3 className="pb-2 text-1xl font-bold text-center">First Prize</h3>
               <p className="pb-2 font-poppins text-base font-semibold text-blackText">First Prize Name:</p>
               <input
                 type="text"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="Enter First Prize Name"
+                placeholder="e.g., Tesla Model S"
                 onChange={(e) => setLotteryData({ ...lotteryData, FirstPrizeName: e.target.value })}
                 required
               />
@@ -293,7 +288,7 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
               <input
                 type="number"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="0"
+                placeholder="e.g., 1"
                 min={0}
                 onChange={(e) => setLotteryData({ ...lotteryData, TotalFirstPrizeWinner: e.target.value })}
                 required
@@ -302,12 +297,12 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
 
             {/* Second Prize */}
             <div className="mb-4">
-              <h3 className="pb-2 text-1xl font-bold text-center ">Second Prize</h3>
+              <h3 className="pb-2 text-1xl font-bold text-center">Second Prize</h3>
               <p className="pb-2 font-poppins text-base font-semibold text-blackText">Second Prize Name:</p>
               <input
                 type="text"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="Enter Second Prize Name"
+                placeholder="e.g., MacBook Pro"
                 onChange={(e) => setLotteryData({ ...lotteryData, SecondPrizeName: e.target.value })}
                 required
               />
@@ -317,7 +312,7 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
               <input
                 type="number"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="0"
+                placeholder="e.g., 2"
                 min={0}
                 onChange={(e) => setLotteryData({ ...lotteryData, TotalSecondPrizeWinner: e.target.value })}
                 required
@@ -326,12 +321,12 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
 
             {/* Third Prize */}
             <div className="mb-4">
-              <h3 className="pb-2 text-1xl font-bold text-center ">Third Prize</h3>
+              <h3 className="pb-2 text-1xl font-bold text-center">Third Prize</h3>
               <p className="pb-2 font-poppins text-base font-semibold text-blackText">Third Prize Name:</p>
               <input
                 type="text"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="Enter Third Prize Name"
+                placeholder="e.g., iPhone 14"
                 onChange={(e) => setLotteryData({ ...lotteryData, ThirdPrizeName: e.target.value })}
                 required
               />
@@ -341,15 +336,12 @@ const CreateNewLottery = ({ setModalOpen, isLoading, setIsLoading, handleData })
               <input
                 type="number"
                 className="w-full rounded-lg border border-gray-400 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                placeholder="0"
+                placeholder="e.g., 5"
                 min={0}
                 onChange={(e) => setLotteryData({ ...lotteryData, TotalThirdPrizeWinner: e.target.value })}
                 required
               />
             </div>
-
-            
-           
           </div>
         </div>
 
