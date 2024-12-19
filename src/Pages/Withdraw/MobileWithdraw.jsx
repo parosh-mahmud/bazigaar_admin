@@ -41,6 +41,7 @@ const MobileWithdraw = ({ isLoading, setIsLoading }) => {
         }
       );
       if (response.data.status === "error") {
+        console.log(response.data.status)
         toast.error(response.data.msg);
       } else {
         console.log("response.data", response.data);

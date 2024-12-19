@@ -101,11 +101,19 @@ export const sidebarDatas = [
       {
         id: 7,
         name: "History",
-        url: "/history",
+        url: "",
         icon: (
           <HistoryIcon className="focus:fill-white active:fill-white group-hover:fill-white" />
         ),
-        submenu: [],
+        submenu: [
+          { id: 31, name: "Package History", url: "/history" },
+          { id: 32, name: "Winner History", url: "/history/winner-history" },
+          {
+            id: 33,
+            name: "Transaction History",
+            url: "/history/transaction-history",
+          },
+        ],
       },
       {
         id: 8,

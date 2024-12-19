@@ -28,6 +28,10 @@ const AllEvents = lazy(() => import("./Pages/ManageEvents/AllEvents"));
 const RecoverAccount = lazy(() => import("./Pages/Auth/RecoverAccount"));
 const Chat = lazy(() => import("./Pages/Chat"));
 const AllHistory = lazy(() => import("./Pages/History/AllHistory"));
+const WinnerHistory = lazy(() => import("./Pages/History/WinnerHistory"));
+const TransactionHistory = lazy(() =>
+  import("./Pages/History/TransactionHistory")
+);
 const LotteryHistory = lazy(() =>
   import("./Component/AllHistory/LotteryHistory")
 );
@@ -258,6 +262,25 @@ export default function App() {
               }
             />
           </Route>
+          <Route
+            path="/history/winner-history"
+            element={
+              <WinnerHistory
+                isLoading={isLoading}
+                setIsLoading={setIsLoading}
+              />
+            }
+          />
+          <Route
+            path="/history/transaction-history"
+            element={
+              <TransactionHistory
+                isLoading={isLoading}
+                setIsLoading={setIsLoading}
+              />
+            }
+          />
+
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </BrowserRouter>
