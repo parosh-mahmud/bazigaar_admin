@@ -1,10 +1,49 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import PrimaryLayout from "../../Component/layouts/PrimaryLayout";
+import axios from "axios";
 
 const TransactionHistory = () => {
   const [activeTab, setActiveTab] = useState("userTransactions"); // Default main tab
   const [subTab, setSubTab] = useState("deposit"); // Default sub-tab
   const [filterText, setFilterText] = useState("");
+ const [depositData, setDepositData] = useState([]);
+  const [withdrawData, setWithdrawData] = useState([]);
+ console.log(depositData);
+
+ // Fetch Deposit Data
+  useEffect(() => {
+    if (subTab === "deposit") {
+      fetchTransactionData("https://api.bazigaar.com/wallet_app/api/v1/administration/user-deposit-transaction/list/", setDepositData);
+    }
+  }, [subTab]);
+
+  // Fetch Withdraw Data
+  useEffect(() => {
+    if (subTab === "withdraw") {
+      fetchTransactionData("https://api.bazigaar.com/wallet_app/api/v1/administration/user-withdraw-transaction/list/", setWithdrawData);
+    }
+  }, [subTab]);
+
+  // Generic function to fetch transaction data
+  const fetchTransactionData = async (url, setData) => {
+    const token = JSON.parse(localStorage.getItem("authInfo"))?.token;
+    const headers = {
+      Authorization: `Token ${token}`
+    };
+
+    try {
+      const response = await axios.get(url, { headers });
+      if (response.data && Array.isArray(response.data.results)) {
+        setData(response.data.results);
+      } else {
+        throw new Error('Data is not an array');
+      }
+    } catch (error) {
+      console.error("Error fetching transaction data:", error);
+      setData([]);  // Reset data on error
+    }
+  };
+
 
   const renderTable = () => {
     if (activeTab === "userTransactions") {
@@ -62,53 +101,60 @@ const TransactionHistory = () => {
     }
   };
 
-  const renderSubTable = (type) => {
-    let demoData;
-    switch (type) {
-      case "deposit":
-        demoData = [
-          { id: 1, username: "John Doe", amount: "100 coin", date: "2024-12-19 14:30", status: "Completed" },
-          { id: 2, username: "Jane Smith", amount: "200 coin", date: "2024-12-19 15:00", status: "Rejected" },
-        ];
-        break;
-      case "withdraw":
-        demoData = [
-          { id: 1, username: "Alice Johnson", amount: "50 coin", date: "2024-12-18 12:00", status: "Completed" },
-          { id: 2, username: "Bob Brown", amount: "75 coin", date: "2024-12-18 14:00", status: "Failed" },
-        ];
-        break;
-      case "userToUser":
-        demoData = [
-          { id: 1, username: "Charlie Davis", sendUser: "John Doe", receiptUser: "Eve Walker", amount: "30 coin", date: "2024-12-17 16:30", status: "Completed" },
-          { id: 2, username: "Eve Walker", sendUser: "Alice Johnson", receiptUser: "Bob Brown", amount: "100 coin", date: "2024-12-17 17:00", status: "Completed" },
-        ];
-        break;
-      case "resellerTransactions":
-        demoData = [
-          {
-            id: 1,
-            username: "Mike Ross",
-            resellerName: "Harvey Specter",
-            resellerCountry: "USA",
-            amount: "150 coin",
-            date: "2024-12-19 10:30",
-            status: "Completed",
-          },
-          {
-            id: 2,
-            username: "Rachel Zane",
-            resellerName: "Donna Paulsen",
-            resellerCountry: "Canada",
-            amount: "250 coin",
-            date: "2024-12-19 11:00",
-            status: "Rejected",
-          },
-        ];
-        break;
-      default:
-        demoData = [];
-    }
-
+ const renderSubTable = (type) => {
+  let demoData;
+  switch (type) {
+    case "deposit":
+      demoData = depositData.map(item => ({
+        id: item.id,
+        username: item.reseller.username,
+        amount: item.amount + " coin",
+        date: new Date(item.created_at).toLocaleString(),
+        status: item.status.charAt(0).toUpperCase() + item.status.slice(1)
+      }));
+      break;
+    case "withdraw":
+      demoData = withdrawData.map(item => ({
+        id: item.id,
+        username: item.user.first_name + " " + item.user.last_name,
+        amount: item.requestTo.amount + " coin",
+        date: new Date(item.created_at).toLocaleString(),
+        status: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+        bankName: item.requestTo.bankName,
+        number: item.requestTo.number
+      }));
+      break;
+    case "userToUser":
+      demoData = [
+        { id: 1, username: "Charlie Davis", sendUser: "John Doe", receiptUser: "Eve Walker", amount: "30 coin", date: "2024-12-17 16:30", status: "Completed" },
+        { id: 2, username: "Eve Walker", sendUser: "Alice Johnson", receiptUser: "Bob Brown", amount: "100 coin", date: "2024-12-17 17:00", status: "Completed" },
+      ];
+      break;
+    case "resellerTransactions":
+      demoData = [
+        {
+          id: 1,
+          username: "Mike Ross",
+          resellerName: "Harvey Specter",
+          resellerCountry: "USA",
+          amount: "150 coin",
+          date: "2024-12-19 10:30",
+          status: "Completed",
+        },
+        {
+          id: 2,
+          username: "Rachel Zane",
+          resellerName: "Donna Paulsen",
+          resellerCountry: "Canada",
+          amount: "250 coin",
+          date: "2024-12-19 11:00",
+          status: "Rejected",
+        },
+      ];
+      break;
+    default:
+      demoData = [];
+  }
     const filteredData = demoData.filter((data) =>
       data.username.toLowerCase().includes(filterText.toLowerCase())
     );

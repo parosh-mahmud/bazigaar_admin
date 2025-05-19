@@ -33,6 +33,7 @@ const StartManualDraw = () => {
     const [isSvgClicked, setIsSvgClicked] = useState(false);
     // console.log("isSvgClicked", isSvgClicked);
     const { id } = useParams();
+    console.log(id)
     const [drawResult, setDrawResult] = useState(null);
     const [ticketId, setTicketId] = useState("0000000000000000");
     // const [firstPrize, setFirstPrize] = useState("0000000000000000");
@@ -178,6 +179,7 @@ const StartManualDraw = () => {
 
     const fetchDrawResult = async () => {
         const token = JSON.parse(localStorage.getItem("authInfo"));
+        console.log(token)
         await axios
             .post(
                 `${process.env.REACT_APP_MAIN_URL}${ENDPOINT.ticket.drawLottery}${id}`,

@@ -17,15 +17,17 @@ const AddBalance = ({
   const handleSubmit = (e) => {
     setIsLoading(true);
     e.preventDefault();
-    axios
-      .post(
-        `${process.env.REACT_APP_MAIN_URL}${ENDPOINT?.user?.userAddBalance}${id}/?amount=${amount}`,null,
-        {
-          headers: {
-            Authorization: "Token " + token.token,
-          },
-        }
-      )
+    axios.post(
+      `${process.env.REACT_APP_MAIN_URL}${ENDPOINT?.user?.userAddBalance}${id}/`,
+      { amount: amount },
+      {
+        headers: {
+          Authorization: "Token " + token.token,
+          "Content-Type": "application/json",
+        },
+      }
+    )
+    
       .then((res) => {
         if (res.data.status === "error") {
           toast.error(res.data.message);
