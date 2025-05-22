@@ -43,6 +43,7 @@ export const sidebarDatas = [
         submenu: [
           { id: 21, name: "Lotteries", url: "/manage-lottery/lotteries" },
           { id: 22, name: "Manual Draw", url: "/manage-lottery/manual-draw" },
+          { id: 23, name: "Winner List", url: "/manage-lottery/cards" },
         ],
       },
       {

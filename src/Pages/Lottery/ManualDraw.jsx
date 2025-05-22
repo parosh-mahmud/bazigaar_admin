@@ -73,6 +73,42 @@ const Lottery = () => {
         }, 1000);
         return () => clearInterval(interval);
     }, []);
+    const renderLotteryStatus = (lottery) => {
+        if (lottery.isDrawComplete) {
+            return (
+                <div className="flex w-full items-center justify-between rounded-md border bg-green-600 p-4 text-white shadow-md lg:w-[350px]">
+                    <span className="text-xl font-bold">Draw Completed</span>
+                    <span className="flex items-center justify-center rounded-full bg-white p-2">
+                        <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="h-6 w-6 text-green-600" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke="currentColor"
+                        >
+                            <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth={2} 
+                                d="M5 13l4 4L19 7" 
+                            />
+                        </svg>
+                    </span>
+                </div>
+            );
+        }
+
+        return (
+            <div className="flex w-full items-center justify-between rounded-md border p-4 shadow-md lg:w-[350px]">
+                <span className="text-xl font-bold">
+                    {formatTime(lottery.remaining_time_seconds)}
+                </span>
+                <span className="">
+                    <ClockIcon />
+                </span>
+            </div>
+        );
+    };
 
     return (
         <Fragment>
@@ -82,38 +118,27 @@ const Lottery = () => {
                         Select A Lottery To Draw
                     </div>
                     <div className="w-full rounded-b-[6px] bg-white p-3 lg:rounded-b-[8px] lg:p-5">
-                        {lotteries.map((val, index) => {
-                            return (
-                                <div
-                                    className="mb-4 grid w-full grid-cols-1 gap-8 last:mb-0 lg:w-fit lg:grid-cols-2 lg:gap-24"
-                                    key={index}
+                        {lotteries.map((lottery, index) => (
+                            <div
+                                className="mb-4 grid w-full grid-cols-1 gap-8 last:mb-0 lg:w-fit lg:grid-cols-2 lg:gap-24"
+                                key={index}
+                            >
+                                <Link
+                                    to={`/manage-lottery/package/${lottery?.LotteryId}`}
+                                    className="flex w-full items-center justify-between rounded-md border bg-black p-4 text-white shadow-md lg:w-[350px]"
                                 >
-                                    <Link
-                                        to={`/manage-lottery/package/${val?.LotteryId}`}
-                                        className="flex w-full items-center justify-between  rounded-md border bg-black p-4 text-white shadow-md lg:w-[350px]"
-                                    >
-                                        <span className="text-xl font-bold">
-                                            {val?.LotteryName}
-                                        </span>
-                                        <div>
-                                            <span className="flex items-center justify-center rounded-full bg-[#D3AC46] p-3">
-                                                <CartIcon />
-                                            </span>
-                                        </div>
-                                    </Link>
-                                    <div className="flex w-full items-center justify-between rounded-md border p-4 shadow-md lg:w-[350px]">
-                                        <span className="text-xl font-bold">
-                                            {formatTime(
-                                                val.remaining_time_seconds
-                                            )}
-                                        </span>
-                                        <span className="">
-                                            <ClockIcon />
+                                    <span className="text-xl font-bold">
+                                        {lottery?.LotteryName}
+                                    </span>
+                                    <div>
+                                        <span className="flex items-center justify-center rounded-full bg-[#D3AC46] p-3">
+                                            <CartIcon />
                                         </span>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                </Link>
+                                {renderLotteryStatus(lottery)}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </PrimaryLayout>

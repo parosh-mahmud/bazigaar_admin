@@ -1,3 +1,4 @@
+//App/config/endpoint.js
 export const PATH = "api";
 
 export const ENDPOINT = {
@@ -43,6 +44,7 @@ export const ENDPOINT = {
     drawLottery: "/lottery/draw-lottery/?LotteryId=",
     soldLottery: "/lottery/all-tickets/?LotteryId=",
     drawLotteryWinners: "/lottery/draw-lottery-winners/?LotteryId=",
+    winnerList: "/lottery/draw-lottery-winners/?LotteryId=",
   },
   slider: {
     addSlider: "/api/slider/add-new-slider/",

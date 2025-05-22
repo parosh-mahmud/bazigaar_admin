@@ -1,6 +1,6 @@
-import React, {  useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import PrimaryLayout from "../../layouts/PrimaryLayout";
-import "../../../Styles/ManualDraw/draw.css";
+import "../../../Styles/ManualDraw/draw.css"; // Ensure this has base-timer styles
 import Counters from "./Counter";
 import axios from "axios";
 import { ENDPOINT } from "../../../App/config/endpoint";
@@ -13,567 +13,326 @@ const WARNING_THRESHOLD = 6;
 const ALERT_THRESHOLD = 3;
 
 const COLOR_CODES = {
-    info: {
-        color: "green",
-    },
-    warning: {
-        color: "orange",
-        threshold: WARNING_THRESHOLD,
-    },
-    alert: {
-        color: "red",
-        threshold: ALERT_THRESHOLD,
-    },
+  info: { color: "green" },
+  warning: { color: "orange", threshold: WARNING_THRESHOLD },
+  alert: { color: "red", threshold: ALERT_THRESHOLD },
 };
 
-const TIME_LIMIT = 10;
+const TIME_LIMIT = 10; // Draw time in seconds
 
 const StartManualDraw = () => {
-    const [detailsLottery, setDetailsLottery] = useState({});
-    const [isSvgClicked, setIsSvgClicked] = useState(false);
-    // console.log("isSvgClicked", isSvgClicked);
-    const { id } = useParams();
-    console.log(id)
-    const [drawResult, setDrawResult] = useState(null);
-    const [ticketId, setTicketId] = useState("0000000000000000");
-    // const [firstPrize, setFirstPrize] = useState("0000000000000000");
-    const [secondPrize, setSecondPrize] = useState("0000000000000000");
-    // console.log("secondPrize", secondPrize);
-    const [thirdPrize, setThirdPrize] = useState("0000000000000000");
-    // console.log("thirdPrize", thirdPrize);
-    const [timer, setTimer] = useState(false);
-    const [clickCount, setClickCount] = useState(0);
-    const [clickedDivs, setClickedDivs] = useState([]);
-    console.log("clickedDivs", clickedDivs);
-    const [error, setError] = useState(false);
+  const { id } = useParams(); // Lottery ID
 
-    useEffect(() => {
-        const storedClickedDivs = localStorage.getItem(`clickedDivs_${id}`);
-        if (storedClickedDivs) {
-            setClickedDivs(JSON.parse(storedClickedDivs));
-        }
-    }, [id]);
+  const [detailsLottery, setDetailsLottery] = useState({});
+  const [drawResult, setDrawResult] = useState(null);
+  const [ticketId, setTicketId] = useState("0000000000000000");
 
-    // Save the clickedDivs state to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem(`clickedDivs_${id}`, JSON.stringify(clickedDivs));
-    }, [clickedDivs, id]);
+  const [isSvgClicked, setIsSvgClicked] = useState(false);
+  const [timerActive, setTimerActive] = useState(false);
+  const [apiError, setApiError] = useState(false);
+  const [drawInitiated, setDrawInitiated] = useState(false);
 
-    let timerInterval = null;
+  const [showFirstWinners, setShowFirstWinners] = useState(false);
+  const [showSecondWinners, setShowSecondWinners] = useState(false);
+  const [showThirdWinners, setShowThirdWinners] = useState(false);
+
+  const [remainingPathColor, setRemainingPathColor] = useState(COLOR_CODES.info.color);
+
+  const formatTime = useCallback((time) => {
+    const minutes = Math.floor(time / 60);
+    let seconds = time % 60;
+    if (seconds < 10) seconds = `0${seconds}`;
+    return `${minutes}:${seconds}`;
+  }, []);
+
+  const updateDialerContent = useCallback((type) => {
+    const dialerElement = document.getElementById("dialer");
+    if (!dialerElement) return;
+
+    if (type === "start") {
+      dialerElement.innerHTML = `<div id="main-btn-img" class="base-timer start-img"></div>`;
+      setRemainingPathColor(COLOR_CODES.info.color);
+    } else if (type === "rolling") {
+      dialerElement.innerHTML = `
+        <div id="main-btn-img" class="base-timer rolling-img">
+          <svg class="base-timer__svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <g class="base-timer__circle">
+              <circle class="base-timer__path-elapsed" cx="50" cy="50" r="45"></circle>
+              <path
+                id="base-timer-path-remaining"
+                stroke-dasharray="${FULL_DASH_ARRAY}"
+                class="base-timer__path-remaining ${remainingPathColor}"
+                d="M 50, 50 m -45, 0 a 45,45 0 1,0 90,0 a 45,45 0 1,0 -90,0"
+              ></path>
+            </g>
+          </svg>
+          <span id="base-timer-label" class="base-timer__label">${formatTime(TIME_LIMIT)}</span>
+        </div>`;
+    } else if (type === "stop") {
+      dialerElement.innerHTML = `<div id="main-btn-img" class="base-timer stop-img"></div>`;
+    }
+  }, [remainingPathColor, formatTime]);
+
+  useEffect(() => {
+    if (!isSvgClicked) {
+      updateDialerContent(timerActive ? "stop" : "start");
+    }
+  }, [isSvgClicked, timerActive, updateDialerContent]);
+
+  useEffect(() => {
+    if (isSvgClicked) {
+      const pathElement = document.getElementById("base-timer-path-remaining");
+      if (pathElement) {
+        pathElement.classList.remove(COLOR_CODES.info.color, COLOR_CODES.warning.color, COLOR_CODES.alert.color);
+        pathElement.classList.add(remainingPathColor);
+      }
+    }
+  }, [remainingPathColor, isSvgClicked]);
+
+  const startTimer = useCallback(() => {
     let timePassed = 0;
     let timeLeft = TIME_LIMIT;
-    // let remainingPathColor = "green";
+    
+    updateDialerContent("rolling"); 
 
-    const [remainingPathColor, setRemainingPathColor] = useState(
-        COLOR_CODES.info.color
-    );
+    const timerInterval = setInterval(() => {
+      timePassed += 1;
+      timeLeft = TIME_LIMIT - timePassed;
 
-    function remainingPathColors(timeLeft) {
-        const { alert, warning } = COLOR_CODES;
-        if (timeLeft <= warning.threshold) {
-            setRemainingPathColor(warning.color);
-        }
-        if (timeLeft <= alert.threshold) {
-            setRemainingPathColor(alert.color);
-        }
+      const labelElement = document.getElementById("base-timer-label");
+      if (labelElement) labelElement.innerHTML = formatTime(timeLeft);
+      
+      const rawTimeFraction = timeLeft / TIME_LIMIT;
+      const timeFraction = rawTimeFraction - (1 / TIME_LIMIT) * (1 - rawTimeFraction);
+      const circleDasharray = `${(timeFraction * FULL_DASH_ARRAY).toFixed(0)} ${FULL_DASH_ARRAY}`;
+      const pathElement = document.getElementById("base-timer-path-remaining");
+      if (pathElement) pathElement.setAttribute("stroke-dasharray", circleDasharray);
 
-        if (timeLeft === 0) {
-            setTimer(true);
-            document.getElementById("dialer").innerHTML = `
-        <div id="main-btn-img" class="base-timer stop-img">
-        </div>
-        `;
-        }
-    }
+      const { alert, warning } = COLOR_CODES;
+      if (timeLeft <= alert.threshold) setRemainingPathColor(alert.color);
+      else if (timeLeft <= warning.threshold) setRemainingPathColor(warning.color);
+      else setRemainingPathColor(COLOR_CODES.info.color);
 
-    function startTimer() {
+      if (timeLeft === 0) {
         clearInterval(timerInterval);
-        timePassed = 0;
-        timeLeft = TIME_LIMIT;
-        timerInterval = setInterval(() => {
-            timePassed = timePassed += 1;
-            timeLeft = TIME_LIMIT - timePassed;
-            document.getElementById("base-timer-label").innerHTML =
-                formatTime(timeLeft);
-            setCircleDasharray();
-            remainingPathColors(timeLeft);
+      }
+    }, 1000);
+    return timerInterval;
+  }, [formatTime, updateDialerContent]);
 
-            if (timeLeft === 0) {
-                setIsSvgClicked(false);
-                onTimesUp();
-            }
-        }, 1000);
+  const fetchDrawResult = async () => {
+    const tokenInfo = localStorage.getItem("authInfo");
+    if (!tokenInfo) {
+      toast.error("Authentication token not found. Please log in.");
+      UnAuth(); 
+      setIsSvgClicked(false); // Ensure UI resets if unauth occurs early
+      setTimerActive(true);  // Or false, depending on desired state after auth error
+      return;
     }
+    const token = JSON.parse(tokenInfo).token;
 
-    const handleDivClick = async (divId) => {
-        setTimer(false);
-        if (
-            clickedDivs.length > 0 &&
-            clickedDivs[clickedDivs.length - 1] !== divId - 1
-        ) {
-            return;
-        }
-        if (divId === 1) {
-            await fetchDrawResult();
-        }
-        let length = clickedDivs.length;
-        if (length === 1) {
-            setTicketId(secondPrize);
-        }
-        if (length === 2) {
-            setTicketId(thirdPrize);
-        }
-        if (!error) {
-          console.log("object");
-            setClickedDivs((prevClickedDivs) => [...prevClickedDivs, divId]);
-            // setTicketId("0000000000000000");
-        }
-    };
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_MAIN_URL}${ENDPOINT.ticket.drawLottery}${id}`,
+        {},
+        { headers: { Authorization: "Token " + token } }
+      );
 
-    const handleSvgClick = async () => {
-        if (!isSvgClicked && clickedDivs.length > 0 && !timer) {
-            const element = document.getElementById("main-btn-img");
-            element.classList = `base-timer rolling-img`;
-            element.innerHTML = `<svg class="base-timer__svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <g class="base-timer__circle">
-                <circle class="base-timer__path-elapsed" cx="50" cy="50" r="45"></circle>
-                <path
-                    id="base-timer-path-remaining"
-                    stroke-dasharray="283"
-                    class="base-timer__path-remaining ${remainingPathColor}"
-                    d="
-                    M 50, 50
-                    m -45, 0
-                    a 45,45 0 1,0 90,0
-                    a 45,45 0 1,0 -90,0
-                    "
-                ></path>
-                </g>
-            </svg>
-            <span id="base-timer-label" style="opacity: 0;" class="base-timer__label"></span>`;
-            startTimer();
-            setIsSvgClicked(true);
-            let count = clickCount + 1;
-            setClickCount(count);
+      // API returns the draw result object directly in response.data
+      if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+        const resultData = response.data;
+
+        // Check for application-level error status if your API includes it in the response object
+        // e.g. if (resultData.status === "error" || resultData.Status === "Error")
+        // For now, we'll rely on a key property like 'lottery_id' to validate successful structure.
+        // The initial code also checked for `result.data.Status == "Error"`
+        // Let's assume if those fields are present, it's an error payload.
+
+        if (resultData.Status === "Error" || resultData.status === "error") {
+             setApiError(true);
+             toast.error(resultData["Message "] || resultData.msg || "An error occurred in draw results.");
+             setDrawResult(null);
+        } else if (resultData.lottery_id) { // Check for a key property to confirm it's the draw data
+            setDrawResult(resultData);
+            setTicketId(resultData.first_prize_winners?.[0]?.ticketId || "0000000000000000");
+            setApiError(false);
         } else {
-            toast.error("Please first select a Lottery to draw.");
+            // It's an object, but not an error structure we explicitly checked,
+            // and not the draw data structure we expected (missing lottery_id).
+            setApiError(true);
+            toast.error("Received an object, but it's not the expected draw result format.");
+            setDrawResult(null);
         }
-    };
-
-    useEffect(() => {
-        document.getElementById("dialer").innerHTML = `
-        <div id="main-btn-img" class="base-timer start-img">
-        </div>
-        `;
-        setRemainingPathColor(COLOR_CODES.info.color);
-    }, [clickedDivs]);
-
-    useEffect(() => {
-        if (isSvgClicked) {
-            const element = document.getElementById(
-                "base-timer-path-remaining"
-            );
-            element.classList = `base-timer__path-remaining ${remainingPathColor}`;
-        }
-    }, [remainingPathColor]);
-
-    const fetchDrawResult = async () => {
-        const token = JSON.parse(localStorage.getItem("authInfo"));
-        console.log(token)
-        await axios
-            .post(
-                `${process.env.REACT_APP_MAIN_URL}${ENDPOINT.ticket.drawLottery}${id}`,
-                {},
-                {
-                    headers: {
-                        Authorization: "Token " + token.token,
-                    },
-                }
-            )
-            .then((result) => {
-                console.log("result", result);
-                if (result.data.Status == "Error") {
-                    setError(true);
-                    localStorage.removeItem(`clickedDivs_${id}`);
-                    setClickedDivs([]);
-                    toast.error(result.data["Message "]);
-                } else {
-                    setDrawResult(result.data[0]);
-                    setTicketId(result.data[0].First_Prize_Winners[0].ticketId);
-                    setSecondPrize(
-                        result.data[0].Second_Prize_Winners[0].ticketId
-                    );
-                    setThirdPrize(
-                        result.data[0].Third_Prize_Winners[0].ticketId
-                    );
-                }
-            })
-            .catch((error) => {
-                setError(true);
-                console.log("error", error);
-                setClickedDivs([]);
-                toast.error(error.response.data.message);
-            });
-    };
-    // const fetchDrawResult = async () => {
-    //     const token = JSON.parse(localStorage.getItem("authInfo"));
-    //     try {
-    //         const response = await axios.post(
-    //             `${ENDPOINT.ticket.drawLottery}${id}`,
-    //             {},
-    //             {
-    //                 headers: {
-    //                     Authorization: "Token " + token.token,
-    //                 },
-    //             }
-    //         );
-    //         if (response.data.status === "error") {
-    //             setClickedDivs([]);
-    //             toast.error(response.data.msg);
-    //         } else {
-    //             setDrawResult(response.data[0]);
-    //             setTicketId(response.data[0].First_Prize_Winners[0].ticketId);
-    //             // setFirstPrize(response.data[0].First_Prize_Winners[0].ticketId);
-    //             setSecondPrize(
-    //                 response.data[0].Second_Prize_Winners[0].ticketId
-    //             );
-    //             setThirdPrize(response.data[0].Third_Prize_Winners[0].ticketId);
-    //         }
-    //     } catch (error) {
-    //         console.error("error", error);
-    //         setClickedDivs([]);
-    //         UnAuth(error);
-    //     }
-    // };
-
-    function onTimesUp() {
-        clearInterval(timerInterval);
+      } else {
+        // response.data is not an object, or it's null/undefined
+        setApiError(true);
+        toast.error("Unexpected response structure from draw API. Expected a JSON object.");
+        setDrawResult(null);
+      }
+    } catch (error) {
+      setApiError(true);
+      setDrawResult(null);
+      console.error("Error fetching draw result:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch draw result.");
+      if (error.response?.status === 401) UnAuth(error);
+    } finally {
+        setIsSvgClicked(false); 
+        setTimerActive(true);   
     }
+  };
 
-    function formatTime(time) {
-        const minutes = Math.floor(time / 60);
-        let seconds = time % 60;
-
-        if (seconds < 10) {
-            seconds = `0${seconds}`;
-        }
-
-        return `${minutes}:${seconds}`;
+  const fetchLotteryDetails = useCallback(async () => {
+    const tokenInfo = localStorage.getItem("authInfo");
+    if (!tokenInfo) return; 
+    const token = JSON.parse(tokenInfo).token;
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_MAIN_URL}${ENDPOINT.ticket.getDetailTicket}${id}`,
+        { headers: { Authorization: "Token " + token } }
+      );
+      if (response.data && response.data.status !== "error") {
+        setDetailsLottery(response.data);
+      }
+    } catch (error) {
+      console.warn("Could not fetch lottery details:", error.message);
+      if (error.response?.status === 401) UnAuth(error);
     }
+  }, [id]);
 
-    function calculateTimeFraction() {
-        const rawTimeFraction = timeLeft / TIME_LIMIT;
-        return rawTimeFraction - (1 / TIME_LIMIT) * (1 - rawTimeFraction);
+  useEffect(() => {
+    fetchLotteryDetails();
+  }, [fetchLotteryDetails]);
+
+  const handleSvgClick = async () => {
+    if (isSvgClicked) {
+      toast.error("Draw is already in progress.");
+      return;
     }
-
-    function setCircleDasharray() {
-        const circleDasharray = `${(
-            calculateTimeFraction() * FULL_DASH_ARRAY
-        ).toFixed(0)} 283`;
-        document
-            .getElementById("base-timer-path-remaining")
-            .setAttribute("stroke-dasharray", circleDasharray);
+    if (drawInitiated && timerActive && !apiError) { // If draw was successful already
+        toast.info("Draw already completed. You can view winners or refresh to try again (if applicable).");
+        return;
     }
+    // Allow re-try if previous attempt had an API error
+    // if (drawInitiated && timerActive && apiError) {
+    //   toast.info("Previous draw attempt failed. Retrying...");
+    // }
 
-    const getData = async () => {
-        const token = JSON.parse(localStorage.getItem("authInfo"));
-        try {
-            const response = await axios.get(
-                `${ENDPOINT.ticket.getDetailTicket}${id}`,
-                {
-                    headers: {
-                        Authorization: "Token " + token.token,
-                    },
-                }
-            );
-            if (response.data.status === "error") {
-                toast.error(response.data.msg);
-            } else {
-                setDetailsLottery(response.data);
-            }
-        } catch (error) {
-            console.error("error", error);
-            UnAuth(error);
-        }
-    };
 
-    useEffect(() => {
-        getData();
-    }, []);
+    setIsSvgClicked(true);
+    setTimerActive(false); 
+    setDrawInitiated(true);
+    setApiError(false); 
+    
+    setShowFirstWinners(false);
+    setShowSecondWinners(false);
+    setShowThirdWinners(false);
+    setDrawResult(null); 
+    setTicketId("DRAWING..."); 
 
+    startTimer();
+    await fetchDrawResult(); 
+  };
+
+  const getDialerPrompt = () => {
+    if (isSvgClicked) return "Draw in progress...";
+    if (timerActive && !apiError && drawResult) return `Draw Complete for ${drawResult.lottery_name}!`;
+    if (timerActive && apiError) return "Error occurred during draw. Please try again.";
+    if (drawInitiated) return "Preparing for draw..."; // This state might be very brief
+    return "Click the dialer to start the draw!";
+  };
+
+  const WinnerList = ({ winners, prizeTitle }) => {
+    if (!winners || winners.length === 0) {
+      return <p className="text-center text-gray-500 py-4">No winners announced for this prize.</p>;
+    }
     return (
-        <PrimaryLayout pageTitle="Lottery Draw">
-            <div className="w-full bg-white py-4">
-                {/* prizes div  */}
-                <div className="grid grid-cols-1 justify-center gap-4 lg:flex lg:flex-row lg:gap-12">
-                    <div
-                        className={`group relative h-[250px] w-full md:w-[330px] lg:w-[370px] `}
-                    >
-                        <div
-                            className={`flex h-[250px] w-full flex-col items-center justify-center gap-4 rounded-lg hover:border-[3px]  hover:border-[#BDFBFF] hover:bg-white hover:text-[#222] hover:shadow md:w-[330px] lg:w-[370px] ${
-                                clickedDivs.includes(1)
-                                    ? " border-[3px] border-[#BDFBFF] bg-white text-[#222] shadow "
-                                    : " bg-black text-neutral-200 shadow-drawShadow "
-                            }`}
-                            onClick={() => handleDivClick(1)}
-                        >
-                            <div className="flex flex-col items-center justify-center gap-4">
-                                <p className="text-2xl font-medium leading-[33.60px]">
-                                    {detailsLottery?.FirstPrizeName}
-                                </p>
-                                <div className="relative h-[150px] w-[150px]">
-                                    <img
-                                        className="absolute left-0 top-0 h-[150px] w-[150px] rounded-full border border-stone-500"
-                                        src={detailsLottery?.image_first}
-                                        alt=""
-                                    />
-                                    <div className="absolute left-0 top-[99px] h-[38px] w-[150px]">
-                                        <div className="absolute left-[29px] top-[3.37px] text-2xl font-medium leading-[33.60px] text-neutral-800">
-                                            1st Prize
-                                        </div>
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="151"
-                                            height="38"
-                                            viewBox="0 0 151 38"
-                                            fill="none"
-                                        >
-                                            <path
-                                                d="M4.5 0L0.5 3H5.5L4.5 0Z"
-                                                fill="#806A37"
-                                            />
-                                            <path
-                                                d="M0.5 3H150.5L136.074 34.5183C135.103 36.6396 132.984 38 130.652 38H21.6637C19.4037 38 17.3378 36.7224 16.3282 34.7004L0.5 3Z"
-                                                fill="url(#paint0_linear_3590_25715)"
-                                            />
-                                            <path
-                                                d="M146.5 0L150.5 3H145.5L146.5 0Z"
-                                                fill="#806A37"
-                                            />
-                                            <defs>
-                                                <linearGradient
-                                                    id="paint0_linear_3590_25715"
-                                                    x1="0.5"
-                                                    y1="20.5"
-                                                    x2="150.5"
-                                                    y2="20.5"
-                                                    gradientUnits="userSpaceOnUse"
-                                                >
-                                                    <stop stopColor="#DDB759" />
-                                                    <stop
-                                                        offset="1"
-                                                        stopColor="#9C8443"
-                                                    />
-                                                </linearGradient>
-                                            </defs>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+      <div className="mb-8 p-4 sm:p-6 bg-white rounded-lg shadow-lg border-l-4 border-sky-400">
+        <h3 className="text-xl font-semibold mb-4 text-sky-600">{prizeTitle}</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {winners.map((winner, index) => (
+            <div className="p-3 bg-sky-50 rounded-md shadow-sm border border-sky-200" key={`${prizeTitle}-${index}`}>
+              <p className="font-semibold text-sky-700 truncate" title={winner?.username}>{winner?.username || "N/A"}</p>
+              <p className="text-sm text-neutral-600">{winner?.ticketId}</p>
+              <p className="text-xs text-neutral-500 truncate" title={winner?.prizeName}>{winner?.prizeName}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  const pageTitle = drawResult?.lottery_name || detailsLottery?.name || "Lottery Draw";
 
-                    <div className="group relative h-[250px] w-full md:w-[330px] lg:w-[370px] ">
-                        <div
-                            className={`flex h-[250px] w-full flex-col items-center justify-center gap-4 rounded-lg hover:border-[3px]  hover:border-[#BDFBFF] hover:bg-white hover:text-[#222] hover:shadow md:w-[330px] lg:w-[370px] ${
-                                clickedDivs.includes(2)
-                                    ? " border-[3px] border-[#BDFBFF] bg-white text-[#222] shadow "
-                                    : " bg-black text-neutral-200 shadow-drawShadow "
-                            }`}
-                            onClick={() => handleDivClick(2)}
-                        >
-                            <div className="flex flex-col items-center justify-center gap-4">
-                                <p className="text-2xl font-medium leading-[33.60px]">
-                                    {detailsLottery?.SecondPrizeName}
-                                </p>
-                                <div className="relative h-[150px] w-[150px]">
-                                    <img
-                                        className="absolute left-0 top-0 h-[150px] w-[150px] rounded-full border border-stone-500"
-                                        src={detailsLottery?.image_second}
-                                        alt=""
-                                    />
-                                    <div className="absolute left-0 top-[99px] h-[38px] w-[150px]">
-                                        <div className="absolute left-[29px] top-[3.37px] text-2xl font-medium leading-[33.60px] text-neutral-800">
-                                            2nd Prize
-                                        </div>
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="151"
-                                            height="38"
-                                            viewBox="0 0 151 38"
-                                            fill="none"
-                                        >
-                                            <path
-                                                d="M4.5 0L0.5 3H5.5L4.5 0Z"
-                                                fill="#806A37"
-                                            />
-                                            <path
-                                                d="M0.5 3H150.5L136.074 34.5183C135.103 36.6396 132.984 38 130.652 38H21.6637C19.4037 38 17.3378 36.7224 16.3282 34.7004L0.5 3Z"
-                                                fill="url(#paint0_linear_3590_25715)"
-                                            />
-                                            <path
-                                                d="M146.5 0L150.5 3H145.5L146.5 0Z"
-                                                fill="#806A37"
-                                            />
-                                            <defs>
-                                                <linearGradient
-                                                    id="paint0_linear_3590_25715"
-                                                    x1="0.5"
-                                                    y1="20.5"
-                                                    x2="150.5"
-                                                    y2="20.5"
-                                                    gradientUnits="userSpaceOnUse"
-                                                >
-                                                    <stop stopColor="#DDB759" />
-                                                    <stop
-                                                        offset="1"
-                                                        stopColor="#9C8443"
-                                                    />
-                                                </linearGradient>
-                                            </defs>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+  return (
+    <PrimaryLayout pageTitle={pageTitle}>
+      <div className="container mx-auto p-4 md:p-6 lg:p-8 font-sans antialiased text-gray-800">
+        
+        <section id="draw-controls" className="my-10 py-8 bg-gradient-to-br from-slate-800 to-neutral-900 rounded-xl shadow-2xl">
+          <h3 className="text-lg sm:text-xl font-medium text-center mb-6 text-neutral-300">
+            {getDialerPrompt()}
+          </h3>
+          {timerActive && apiError && <p className="text-center text-red-400 mb-4">An API error occurred. Please try clicking the dialer again.</p>}
 
-                    <div className="group relative h-[250px] w-full md:w-[330px] lg:w-[370px] ">
-                        <div
-                            className={`flex h-[250px] w-full flex-col items-center justify-center gap-4 rounded-lg hover:border-[3px]  hover:border-[#BDFBFF] hover:bg-white hover:text-[#222] hover:shadow md:w-[330px] lg:w-[370px] ${
-                                clickedDivs.includes(3)
-                                    ? " border-[3px] border-[#BDFBFF] bg-white text-[#222] shadow "
-                                    : " bg-black text-neutral-200 shadow-drawShadow "
-                            }`}
-                            onClick={() => handleDivClick(3)}
-                        >
-                            <div className="flex flex-col items-center justify-center gap-4">
-                                <p className="text-2xl font-medium leading-[33.60px]">
-                                    {detailsLottery?.ThirdPrizeName}
-                                </p>
-                                <div className="relative h-[150px] w-[150px]">
-                                    <img
-                                        className="absolute left-0 top-0 h-[150px] w-[150px] rounded-full border border-stone-500"
-                                        src={detailsLottery?.image_third}
-                                        alt=""
-                                    />
-                                    <div className="absolute left-0 top-[99px] h-[38px] w-[150px]">
-                                        <div className="absolute left-[29px] top-[3.37px] text-2xl font-medium leading-[33.60px] text-neutral-800">
-                                            3rd Prize
-                                        </div>
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            width="151"
-                                            height="38"
-                                            viewBox="0 0 151 38"
-                                            fill="none"
-                                        >
-                                            <path
-                                                d="M4.5 0L0.5 3H5.5L4.5 0Z"
-                                                fill="#806A37"
-                                            />
-                                            <path
-                                                d="M0.5 3H150.5L136.074 34.5183C135.103 36.6396 132.984 38 130.652 38H21.6637C19.4037 38 17.3378 36.7224 16.3282 34.7004L0.5 3Z"
-                                                fill="url(#paint0_linear_3590_25715)"
-                                            />
-                                            <path
-                                                d="M146.5 0L150.5 3H145.5L146.5 0Z"
-                                                fill="#806A37"
-                                            />
-                                            <defs>
-                                                <linearGradient
-                                                    id="paint0_linear_3590_25715"
-                                                    x1="0.5"
-                                                    y1="20.5"
-                                                    x2="150.5"
-                                                    y2="20.5"
-                                                    gradientUnits="userSpaceOnUse"
-                                                >
-                                                    <stop stopColor="#DDB759" />
-                                                    <stop
-                                                        offset="1"
-                                                        stopColor="#9C8443"
-                                                    />
-                                                </linearGradient>
-                                            </defs>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          <div className="flex flex-col items-center justify-center gap-6 lg:flex-row lg:gap-12">
+            <div 
+              id="dialer" 
+              onClick={handleSvgClick} 
+              className={`${isSvgClicked || (timerActive && !apiError && drawResult) ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+              title={isSvgClicked ? 'Draw in progress' : ((timerActive && !apiError && drawResult) ? 'Draw complete' : 'Click to start draw')}
+            >
+              {/* Dialer SVG/Image is injected by useEffects via updateDialerContent */}
             </div>
-            {/* 1st winner list */}
-            <div className="ld:grid-cols-5 my-6 grid grid-cols-1 items-center justify-center gap-6 md:grid-cols-4">
-                {drawResult &&
-                clickedDivs.length === 1 &&
-                timer &&
-                clickCount === 1
-                    ? drawResult.First_Prize_Winners.map((val, index) => {
-                          return (
-                              <div className="box" key={index}>
-                                  <div className="name_box">
-                                      <p>{val?.username}</p>
-                                  </div>
-                                  <div class="circle-container">
-                                      <p class="number">{val?.ticketId}</p>
-                                  </div>
-                              </div>
-                          );
-                      })
-                    : ""}
-            </div>
-            {/* 2nd winner list */}
-            <div className="ld:grid-cols-5 my-6 grid grid-cols-1 items-center justify-center gap-6 md:grid-cols-4">
-                {drawResult &&
-                clickedDivs.length === 2 &&
-                timer &&
-                clickCount === 2
-                    ? drawResult.Second_Prize_Winners.map((val, index) => {
-                          return (
-                              <div className="box" key={index}>
-                                  <div className="name_box">
-                                      <p>{val?.username}</p>
-                                  </div>
-                                  <div class="circle-container">
-                                      <p class="number">{val?.ticketId}</p>
-                                  </div>
-                              </div>
-                          );
-                      })
-                    : ""}
-            </div>
-            {/* 3rd winner list */}
-            <div className="ld:grid-cols-5 my-6 grid grid-cols-1 items-center justify-center gap-6 md:grid-cols-4">
-                {drawResult &&
-                clickedDivs.length === 3 &&
-                timer &&
-                clickCount === 3
-                    ? drawResult.Third_Prize_Winners.map((val, index) => {
-                          return (
-                              <div className="box" key={index}>
-                                  <div className="name_box">
-                                      <p>{val?.username}</p>
-                                  </div>
-                                  <div class="circle-container">
-                                      <p class="number">{val?.ticketId}</p>
-                                  </div>
-                              </div>
-                          );
-                      })
-                    : ""}
-            </div>
-
-            <div className="mt-[5%] flex flex-col items-center justify-center gap-5 lg:flex-row lg:gap-8">
-                <div id="dialer" onClick={handleSvgClick}></div>
-                <Counters
-                    totalValue={isSvgClicked && ticketId}
-                    duration1={isSvgClicked && TIME_LIMIT}
+            <div className="w-full max-w-md lg:max-w-sm px-4">
+                 <Counters
+                    totalValue={ticketId} 
+                    duration1={(isSvgClicked) ? TIME_LIMIT : 0}
                 />
             </div>
-        </PrimaryLayout>
-    );
+          </div>
+        </section>
+
+        {drawInitiated && timerActive && !apiError && drawResult && (
+            <section id="view-winners-buttons" className="my-10 text-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <button 
+                    onClick={() => setShowFirstWinners(s => !s)}
+                    className="w-full sm:w-auto px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105"
+                >
+                    {showFirstWinners ? "Hide" : "View"} 1st Prize Winners ({drawResult.first_prize_winners?.length || 0})
+                </button>
+                <button 
+                    onClick={() => setShowSecondWinners(s => !s)}
+                    className="w-full sm:w-auto px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105"
+                >
+                    {showSecondWinners ? "Hide" : "View"} 2nd Prize Winners ({drawResult.second_prize_winners?.length || 0})
+                </button>
+                <button 
+                    onClick={() => setShowThirdWinners(s => !s)}
+                    className="w-full sm:w-auto px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105"
+                >
+                    {showThirdWinners ? "Hide" : "View"} 3rd Prize Winners ({drawResult.third_prize_winners?.length || 0})
+                </button>
+            </section>
+        )}
+
+        {drawInitiated && timerActive && !apiError && drawResult && (
+          <section id="winners-display" className="mt-12">
+            {showFirstWinners && (
+                <WinnerList winners={drawResult.first_prize_winners} prizeTitle="1st Prize Winners" />
+            )}
+            {showSecondWinners && (
+                <WinnerList winners={drawResult.second_prize_winners} prizeTitle="2nd Prize Winners" />
+            )}
+            {showThirdWinners && (
+                <WinnerList winners={drawResult.third_prize_winners} prizeTitle="3rd Prize Winners" />
+            )}
+          </section>
+        )}
+         {timerActive && !apiError && !drawResult && (
+            <p className="text-center text-gray-500 my-10">Draw process completed, but no winner data was found in the response.</p>
+        )}
+      </div>
+    </PrimaryLayout>
+  );
 };
 
 export default StartManualDraw;
