@@ -45,6 +45,7 @@ export const ENDPOINT = {
     soldLottery: "/lottery/all-tickets/?LotteryId=",
     drawLotteryWinners: "/lottery/draw-lottery-winners/?LotteryId=",
     winnerList: "/lottery/draw-lottery-winners/?LotteryId=",
+    updateClaimStatus: "/lottery/update-claim-status/?LotteryId=",
   },
   slider: {
     addSlider: "/api/slider/add-new-slider/",
